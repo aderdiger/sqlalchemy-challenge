@@ -13,20 +13,20 @@ from flask import Flask, jsonify
 #################################################
 
 # Create engine using the `hawaii.sqlite` database file
-engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///hawaii.sqlite")
 
 # Declare a Base using `automap_base()`
-# YOUR CODE HERE
+base = automap_base()
 
 # Use the Base class to reflect the database tables
-# YOUR CODE HERE
+base.prepare(autoload_with=engine)
 
 # Assign the measurement class to a variable called `Measurement` and the station class to a variable called `Station`
-Measurement = Base.classes.measurement
-Station = Base.classes.station
+Measurement = base.classes['measurement']
+Station = base.classes['station']
 
 # The session is created and closed for each API route query instead of opening the session here and closing it at the end
-
+session = Session(engine)
 
 
 #################################################
@@ -69,15 +69,14 @@ def prcpdata():
     session.close()
 
     # Create empty list
-    # YOUR CODE HERE
-	
+    prcp_data = []  	
 	
     # Append each datapoint to the list
-    # YOUR CODE HERE
-	
+    for date, prcp in results:
+        prcp_data.append({date: prcp})	
 	
     # Return jsonified precipitation data
-    # YOUR CODE HERE
+    return jsonify(prcp_data)
 	
 
 # Page with station data    
@@ -91,15 +90,14 @@ def stationinfo():
     session.close()
 
     # Create empty list
-    # YOUR CODE HERE
-    
+    station_data = []
 	
     # Append each datapoint to the list
-    # YOUR CODE HERE
-
+    for station, station_id in results:
+        station_data.append({'station': station, 'id': station_id})
 
     # Return jsonified precipitation data
-    # YOUR CODE HERE
+    return jsonify(station_data)
     
 
 # Page with temperature data
@@ -115,15 +113,14 @@ def tobsdata():
     session.close()
 
     # Create empty list
-    # YOUR CODE HERE
-
+    tobs_data = []
 
     # Append each datapoint to the list
-    # YOUR CODE HERE
-
+    for date, tobs in results:
+        tobs_data.append({'date': date, 'temperature': tobs})
 
     # Return jsonified temperature data
-    # YOUR CODE HERE
+    return jsonify(tobs_data)
 
 
 # Page for finding temperature data after the given start date    
@@ -133,6 +130,7 @@ def startinfo(start):
     """Return a list of the temperature statistics after the provided date"""
     
     session = Session(engine)
+
     # Define functions for min, max, and avg
     sel = [Measurement.station, 
            func.min(Measurement.tobs), 
@@ -140,20 +138,23 @@ def startinfo(start):
            func.avg(Measurement.tobs)]
     
     # Query for all temperatures after the provided start date
-    # YOUR CODE HERE
-	
+    temperature_stats = session.query(*sel).\
+                        filter(Measurement.date >= start).all()	
+    
     session.close() 
 
     # Create empty list     
-    # YOUR CODE HERE
+    temp_stats_data = []
 	
-
     # Append the statistics from the query to the list
-    # YOUR CODE HERE
-	
+    for min_temp, max_temp, avg_temp in temperature_stats:
+        temp_stats_data.append({'start_date': start,
+                                'min_temperature': min_temp,
+                                'max_temperature': max_temp,
+                                'avg_temperature': avg_temp})	
 
     # Return jsonified statistics
-    # YOUR CODE HERE
+    return jsonify(temp_stats_data)
 	
 
 # Page for finding temperature data between the given dates
@@ -171,19 +172,25 @@ def startendinfo(start, end):
            func.avg(Measurement.tobs)]
     
     # Query for all temperatures between the provided dates
-    # YOUR CODE HERE
-	
+    temperature_stats_2 = session.query(*sel).\
+                        filter(Measurement.date >= start).\
+                        filter(Measurement.date <= end).all()	
+    
     session.close()
 
     # Create empty list   
-    # YOUR CODE HERE
+    temp_stats_data_2 = []
 
     # Append the statistics from the query to the list
-    # YOUR CODE HERE
-	
+    for min_temp, max_temp, avg_temp in temperature_stats_2:
+        temp_stats_data_2.append({'start_date': start,
+                                'end_date': end,
+                                'min_temperature': min_temp,
+                                'max_temperature': max_temp,
+                                'avg_temperature': avg_temp})	
 
     # Return jsonified statistics
-    # YOUR CODE HERE
+    return jsonify(temp_stats_data_2)
 
 # Debugging
 if __name__ == '__main__':
