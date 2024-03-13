@@ -8,6 +8,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func, MetaData
 from flask import Flask, jsonify
 
+import os
+
+db_path = 'hawaii.sqlite'
+if os.path.exists(db_path):
+    print("SQLite file exists.")
+else:
+    print("SQLite file does not exist.")
+
 #################################################
 # Database Setup
 #################################################
@@ -15,18 +23,17 @@ from flask import Flask, jsonify
 # Create engine using the `hawaii.sqlite` database file
 engine = create_engine("sqlite:///hawaii.sqlite")
 
+
 # Declare a Base using `automap_base()`
-# base = automap_base()
-metadata = MetaData(bind=engine)
-metadata.reflect()
-print(metadata.tables)
+base = automap_base()
+
 
 # Use the Base class to reflect the database tables
-# base.prepare(autoload_with=engine)
+base.prepare(autoload_with=engine)
 
 # Assign the measurement class to a variable called `Measurement` and the station class to a variable called `Station`
-# Measurement = base.classes.measurement
-# Station = base.classes.station
+Measurement = base.classes.measurement
+Station = base.classes.station
 
 # The session is created and closed for each API route query instead of opening the session here and closing it at the end
 session = Session(engine)
